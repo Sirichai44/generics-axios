@@ -16,8 +16,8 @@ export const axiosService = async <T>(
       },
     });
 
-    return response.data;
+    return response.data as T;
   } catch (error) {
-    return error instanceof AxiosError ? error : defaultError;
+    return error as AxiosError<typeof defaultError>;
   }
 };
