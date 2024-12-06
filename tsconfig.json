@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "module": "ESNext",
+    "target": "ES2022",
+    "declaration": true,
+    "outDir": "./dist",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "react": ["./node_modules/react"]
+    }
+  },  
+  "include": [
+    "lib/**/*"
+  ]
+}
