@@ -1,11 +1,12 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { useAxiosContext } from './context';
+import { AxiosReturn } from './useAxios';
 
 
 export const axiosService = async <T>(
   config: AxiosRequestConfig
-): Promise<T | AxiosError> => {
-  const { headerDefault, defaultError } = useAxiosContext();
+): Promise<AxiosReturn<T, unknown, unknown>> => {
+  const { headerDefault, defaultError, defaultReturn } = useAxiosContext();
 
   const execute = async () => {
     try {
@@ -23,5 +24,5 @@ export const axiosService = async <T>(
     }
   }
 
-  return { execute };
+  return { execute }  as AxiosReturn<T, typeof defaultReturn, typeof defaultError>;
 };

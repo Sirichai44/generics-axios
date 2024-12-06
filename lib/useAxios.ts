@@ -1,7 +1,5 @@
-// useAxios.ts
-import { useState } from 'react';
-import { axiosService } from './axiosService';
-import { AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError } from "axios";
+import { useAxiosContext } from "./context";
 
 export type Method = "GET" | "POST" | "PUT" | "DELETE";
 export type Return = "DEFAULT" | Record<string, any>;
@@ -10,33 +8,34 @@ export type AxiosParams<T extends Method> = T extends "POST" | "PUT"
   ? { method: T; data: any; url: string }
   : { method: T; url: string };
 
-// ฟังก์ชัน `useAxios` สำหรับ React component
+export type AxiosReturn<U, DefaultReturn, DefaultError> = U extends "DEFAULT"
+  ? { execute: () => Promise<DefaultReturn | AxiosError<DefaultError>> }
+  : { execute: () => Promise<U | AxiosError<DefaultError>> };
+
 export const useAxios = <T extends Method, U extends Return>(
   params: AxiosParams<T>,
   useDefault: boolean = false
-) => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [data, setData] = useState<U | null>(null);
-  const [error, setError] = useState<AxiosError | null>(null);
+): AxiosReturn<U, typeof defaultReturn, typeof defaultError> => {
+  const { defaultReturn, defaultError, headerDefault } = useAxiosContext();
 
   const execute = async () => {
-    setLoading(true);
     try {
-      const result = await axiosService<U>(params);
+      const response = await axios({
+        ...params,
+        headers: {
+          ...headerDefault,
+        },
+      });
 
       if (useDefault) {
-        setData(result as U);
-      } else {
-        setData(result);
+        return defaultReturn
       }
-      setError(null);
-    } catch (err) {
-      setError(err instanceof AxiosError ? err : new AxiosError('Unknown Error'));
-      setData(null);
-    } finally {
-      setLoading(false);
+
+      return response.data;
+    } catch (error) {
+      return error as AxiosError<typeof defaultError>;
     }
   };
 
-  return { execute, data, error, loading };
+  return { execute } as AxiosReturn<U, typeof defaultReturn, typeof defaultError>;
 };
