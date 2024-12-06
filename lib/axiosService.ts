@@ -7,17 +7,21 @@ export const axiosService = async <T>(
 ): Promise<T | AxiosError> => {
   const { headerDefault, defaultError } = useAxiosContext();
 
-  try {
-    const response = await axios({
-      ...config,
-      headers: {
-        ...headerDefault,
-        ...config.headers, 
-      },
-    });
+  const execute = async () => {
+    try {
+      const response = await axios({
+        ...config,
+        headers: {
+          ...headerDefault,
+          ...config.headers,
+        },
+      });
 
-    return response.data as T;
-  } catch (error) {
-    return error as AxiosError<typeof defaultError>;
+      return response.data as T;
+    } catch (error) {
+      return error as AxiosError<typeof defaultError>;
+    }
   }
+
+  return { execute };
 };
