@@ -1,5 +1,7 @@
-import axios, { AxiosError } from "axios";
-import { useAxiosContext } from "./context";
+// useAxios.ts
+import { useState } from 'react';
+import { axiosService } from './axiosService';
+import { AxiosError, AxiosRequestConfig } from 'axios';
 
 export type Method = "GET" | "POST" | "PUT" | "DELETE";
 export type Return = "DEFAULT" | Record<string, any>;
@@ -8,34 +10,33 @@ export type AxiosParams<T extends Method> = T extends "POST" | "PUT"
   ? { method: T; data: any; url: string }
   : { method: T; url: string };
 
-type AxiosReturn<U, DefaultReturn, DefaultError> = U extends "DEFAULT"
-  ? { execute: () => Promise<DefaultReturn | AxiosError<DefaultError>> }
-  : { execute: () => Promise<U | AxiosError<DefaultError>> };
-
+// ฟังก์ชัน `useAxios` สำหรับ React component
 export const useAxios = <T extends Method, U extends Return>(
   params: AxiosParams<T>,
   useDefault: boolean = false
-): AxiosReturn<U, typeof defaultReturn, typeof defaultError> => {
-  const { defaultReturn, defaultError, headerDefault } = useAxiosContext();
+) => {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [data, setData] = useState<U | null>(null);
+  const [error, setError] = useState<AxiosError | null>(null);
 
   const execute = async () => {
+    setLoading(true);
     try {
-      const response = await axios({
-        ...params,
-        headers: {
-          ...headerDefault,
-        },
-      });
+      const result = await axiosService<U>(params);
 
       if (useDefault) {
-        return defaultReturn
+        setData(result as U);
+      } else {
+        setData(result);
       }
-
-      return response.data;
-    } catch (error) {
-      return error as AxiosError<typeof defaultError>;
+      setError(null);
+    } catch (err) {
+      setError(err instanceof AxiosError ? err : new AxiosError('Unknown Error'));
+      setData(null);
+    } finally {
+      setLoading(false);
     }
   };
 
-  return { execute } as AxiosReturn<U, typeof defaultReturn, typeof defaultError>;
+  return { execute, data, error, loading };
 };
