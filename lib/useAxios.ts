@@ -8,14 +8,14 @@ export type AxiosParams<T extends Method> = T extends "POST" | "PUT"
   ? { method: T; data: any; url: string }
   : { method: T; url: string };
 
-type AxiosReturn<U, DefaultReturn> = U extends "DEFAULT"
-  ? { execute: () => Promise<DefaultReturn | AxiosError<any>> }
-  : { execute: () => Promise<U | AxiosError<any>> };
+type AxiosReturn<U, DefaultReturn, DefaultError> = U extends "DEFAULT"
+  ? { execute: () => Promise<DefaultReturn | AxiosError<DefaultError>> }
+  : { execute: () => Promise<U | AxiosError<DefaultError>> };
 
 export const useAxios = <T extends Method, U extends Return>(
   params: AxiosParams<T>,
   useDefault: boolean = false
-): AxiosReturn<U, any> => {
+): AxiosReturn<U, typeof defaultReturn, typeof defaultError> => {
   const { defaultReturn, defaultError, headerDefault } = useAxiosContext();
 
   const execute = async () => {
@@ -33,11 +33,9 @@ export const useAxios = <T extends Method, U extends Return>(
 
       return response.data;
     } catch (error) {
-      return error instanceof AxiosError ? error : defaultError;
+      return error as AxiosError<typeof defaultError>;
     }
   };
 
-  return { execute } as AxiosReturn<U, typeof defaultReturn>;
+  return { execute } as AxiosReturn<U, typeof defaultReturn, typeof defaultError>;
 };
-
-
